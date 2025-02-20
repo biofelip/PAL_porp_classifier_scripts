@@ -114,7 +114,7 @@ predictions_df$gbm |> head()
 
 ## Training script and performance
 
-The training script is available in `training_and_test.R`. The training process requires a labeled csv file that contains all the variables that are normal output of the C-POD and an additional column `click` that identifies the ground truth for the observations. In our script we started with two already distinct files for training and testing, so make sure to split  you labelled dataset  into a train and test set.
+The training script is available in `2_training_and_test.R`. The training process requires a labeled csv file that contains all the variables that are normal output of the C-POD and an additional column `click` that identifies the ground truth for the observations, either "pal" or "porp". In our script we started with two already distinct files for training and testing, so make sure to split  you labelled dataset  into a train and test set.
 
 The complete description of the training can be found in our publication. These models are still being updated with new hyperparameters and we expect to add more training data in the future. The  hyperparameters and performance of the models in the current version of this repository are presented below. 
 
