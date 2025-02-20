@@ -33,7 +33,7 @@ library(caTools)
 library(gbm)
 library(randomForest)
 # source the functions
-source("utils_functions.r")
+source("0_utils_functions.r")
 # Load the three models
 load("models/fit_gbm.RData")
 load("models/fit_rf.RData")
