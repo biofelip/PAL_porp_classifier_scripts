@@ -148,4 +148,4 @@ The complete description of the training can be found in our publication. Thess 
 
 #### Variable importance
 
-![Variable Importance](varimp.png)
+![Variable Importance](varImp.png)
