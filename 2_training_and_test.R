@@ -5,10 +5,10 @@ library(pROC)
 library(ggplot2)
 library(cowplot)
 library(butcher)
-source("utils_functions.r")
+source("0_utils_functions.r")
 # Load the example clicks dataset
 train_data <- read.csv("training_set.csv")
-test_data <- read.csv("Test_Dataset_complete.csv")
+test_data <- read.csv("Test_Dataset.csv")
 # one hot encode the TrClass variable
 train_data$TrClassH <- ifelse(train_data$TrClass == "High", 1, 0)
 train_data$TrClassM <- ifelse(train_data$TrClass == "Mod", 1, 0)

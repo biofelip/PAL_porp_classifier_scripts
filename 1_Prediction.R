@@ -3,20 +3,20 @@ library(dplyr)
 library(caTools)
 library(gbm)
 library(randomForest)
-source("utils_functions.r")
+source("0_utils_functions.r")
 # Load the three models
-load("fit_gbm.RData")
-load("fit_rf.RData")
-load("fit_log_reg_boost.RData")
+load("models/fit_gbm.RData")
+load("models/fit_rf.RData")
+load("models/fit_log_reg_boost.RData")
 # Change the following line with the csv of your data.
-all_data_tb <- read.csv(r"(C:\Users\247404\Documents\2024\jeff_porpoise_detector\jeff_porpoise_detector\ALLDATA\north sea and baltic sea\PosWL_20220810_NPV_CPOD2374_20220426 details.csv)", sep = ";")
+all_data_tb <- read.csv(r"(CPOD_data.csv)", sep = ";")
 # Processing and inference
 all_data_tb_p <- preprocess_data(all_data_tb)
 # change the argument "return_probs" to false if you want the raw probabilities
 # instead of the predicted category.
 predictions_df <- run_predictions(
   data = all_data_tb_p,
-  threshold_file = "thresholds2.csv",
+  threshold_file = "thresholds.csv",
   return_probs = "FALSE"
 )
 # We can do some post processing on the predictions dataframe.

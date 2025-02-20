@@ -35,9 +35,9 @@ library(randomForest)
 # source the functions
 source("utils_functions.r")
 # Load the three models
-load("fit_gbm.RData")
-load("fit_rf.RData")
-load("fit_log_reg_boost.RData")
+load("models/fit_gbm.RData")
+load("models/fit_rf.RData")
+load("models/fit_log_reg_boost.RData")
 # load your data
 all_data_tb <- read.csv("your_CPOD_data.csv")
 
@@ -130,7 +130,7 @@ The complete description of the training can be found in our publication. These 
 
 #### Confusion matrix
 
-![Confusion Matrix](CF_mat.png)
+![Confusion Matrix](img\\CF_mat.png)
 
 |                     | GBM  Val| RF Val| LBR Val| GBM Test| RF Test| LBR Test|
 |:--------------------|---------:|---------:|---------:|---------:|---------:|---------:|
@@ -148,4 +148,4 @@ The complete description of the training can be found in our publication. These 
 
 #### Variable importance
 
-![Variable Importance](varImp.png)
+![Variable Importance](img\\varImp.png)
