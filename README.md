@@ -92,7 +92,7 @@ As can be seen the function adds a new column called `corrected_category` that r
 |PAL    |   566|240|
 |porp    | 39988|40314|
 
-Finally `run_predictions` can also return the raw probabilities for ech observation when  `return_prob = TRUE` then the function returns a list of length three with each element of the list being a dataframe with two columns containing the probability for each category.
+Finally `run_predictions` can also return the raw probabilities for each observation when  `return_prob = TRUE` then the function returns a list of length three with each element of the list being a dataframe with two columns containing the probability for each category.
 
 ```r
 predictions_df <- run_predictions(
