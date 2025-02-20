@@ -53,7 +53,7 @@ predictions_df <- run_predictions(
 )
 ```
 
-The resulting dataframe contains the same number of rows as the original data and four columns that correspond to the predictions for each model and a fourth column for the ensemble prediction (remember than 0 means PAL and 1 means a porpoise call).
+The resulting dataframe contains the same number of rows as the original data and four columns that correspond to the predictions for each model and a fourth column for the ensemble prediction (remember that 0 means PAL and 1 means a porpoise call).
 
 | lrb| gbm| rf| ensemble|
 |:---:|:---:|:--:|:--------:|
