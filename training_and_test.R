@@ -3,15 +3,17 @@ library(glue)
 library(plotROC)
 library(pROC)
 library(ggplot2)
+library(cowplot)
+source("utils_functions.r")
 # Load the example clicks dataset
-data <- read.csv("examples_clicks.csv")
-# data <- read.csv("your_labelled_data.csv")
+train_data <- read.csv("training_set.csv")
+test_data <- read.csv("Test_Dataset_complete.csv")
 # one hot encode the TrClass variable
-data$TrClassH <- ifelse(data$TrClass == "High", 1, 0)
-data$TrClassM <- ifelse(data$TrClass == "Mod", 1, 0)
+train_data$TrClassH <- ifelse(train_data$TrClass == "High", 1, 0)
+train_data$TrClassM <- ifelse(train_data$TrClass == "Mod", 1, 0)
 # select only the features necessary for training
-data <- data[, c(
-     "station", "Start", "TrDur_us",
+train_data <- train_data[, c(
+     "Start", "TrDur_us",
      "NofClx", "nActualClx", "Clx.s", "ICIgood",
      "modalKHz", "avSPL", "MaxICI_us", "MinICI_us",
      "MMM", "TimeLost", "ClksThisMin", "LastICI_us",
@@ -20,18 +22,12 @@ data <- data[, c(
      "avClstrN.10", "Frange", "avSlope1",
      "avSlope2", "avBW", "TrClassH", "TrClassM", "click"
 )]
-# split the data into train and test
-train_index <- createDataPartition(data$click, p = 0.7, list = FALSE)
-train_data <- data[train_index, ]
-test_data <- data[-train_index, ]
-station_train <- train_data$station
-station_test <- test_data$station
-# remove the station column from both train and test
-train_data <- train_data[, -1]
-test_data <- test_data[, -1]
-# make the response a factor
+
+test_data <- test_data[, -1] # remove the index from test set
+# make the click a factor with the second level being the porp so its the positive class
 train_data$click <- factor(train_data$click, levels = c("pal", "porp"))
 test_data$click <- factor(test_data$click, levels = c("pal", "porp"))
+
 # define the weights
 w_porp <- length(train_data$click) / table(train_data$click)["porp"]
 w_pal <- length(train_data$click) / table(train_data$click)["pal"]
@@ -49,29 +45,26 @@ fit_control <- trainControl(
      summaryFunction = twoClassSummary,
      savePredictions = TRUE
 )
-
 # Hyperparemeter grids for performing grid search for the  three models
-
 tunegrid_gbm <- expand.grid(
-     interaction.depth = c(1, 5, 9),
-     n.trees = (1:30) * 50,
-     shrinkage = 0.1,
-     n.minobsinnode = 20
+     interaction.depth = c(2, 5, 9),
+     n.trees = seq(100, 1000, by = 50),
+     shrinkage = seq(0.1:0.01, by = 0.2),
+     n.minobsinnode = seq(10, 60, by = 5)
 )
 tunegrid_rf <- data.frame(.mtry = (1:28))
 tunegrid_lgr <- data.frame(.nIter = (1:100))
-
-set.seed(825)
+set.seed(825) # seed for reproducibility
 fit_gbm <- train(click ~ .,
      data = train_data,
      method = "gbm",
      trControl = fit_control,
-     verbose = TRUE,
      tuneGrid = tunegrid_gbm,
      ## Specify which metric to optimize
      metric = "ROC",
      weights = weights
 )
+save(fit_gbm, file = "fit_gbm.RData")
 fit_rf <- train(click ~ .,
      data = train_data,
      method = "rf",
@@ -81,7 +74,7 @@ fit_rf <- train(click ~ .,
      tuneGrid = tunegrid_rf,
      weights = weights
 )
-beepr::beep()
+save(fit_rf, file = "fit_rf.RData")
 fit_log_reg_boost <- train(click ~ .,
      data = train_data,
      method = "LogitBoost",
@@ -91,90 +84,73 @@ fit_log_reg_boost <- train(click ~ .,
      tuneGrid = tunegrid_lgr,
      weights = weights
 )
-
-confusionMatrix(
-     data = fit_log_reg_boost$pred$pred,
-     reference = fit_log_reg_boost$pred$obs
-)
-confusionMatrix(
-     data = predict(
-          fit_log_reg_boost,
-          subset(test_data, select = -click)
-     ),
-     reference = test_data$click
-)
-
-save(fit_log_reg_boost, file = "log_reg_boosted_gridsearch2.RData")
-
+save(fit_log_reg_boost, file = "fit_log_reg_boost.RData")
 # the best tune for each model is explained here
-sapply(list(gbmfit, fit_rf, fit_log_reg_boost), \(x) x$bestTune)
 
+sapply(list(fit_gbm, fit_rf, fit_log_reg_boost), \(x) x$bestTune)
 
-
-
+### Plotting results
+# Confusion matrices for Validation
+ensamble <- list(fit_gbm, fit_rf, fit_log_reg_boost)
+cf_mat_val <- lapply(ensamble, confusionMatrix.train, norm = "none")
+cf_plots <- lapply(cf_mat_val, plot_cf)
+plot_grid(plotlist = cf_plots, nrow = 3, labels = c("GBM", "RF", "LBR"))
+# Confusion matrices for the test set
+cf_mat_t <- lapply(ensamble, confusionMatrix, newdata = test_set, norm = "none")
+cf_plots_t <- lapply(cf_mat_t, plot_cf)
+plot_grid(plotlist = cf_plots_t, nrow = 3, labels = c("GBM", "RF", "LBR"))
 # build roc curves for all the classifiers
-
-# roc_gbm
+# Best models
 indices_gbm <- dplyr::filter(
-     gbmfit$pred,
-     n.trees == 500,
-     interaction.depth == 1,
-     shrinkage == 0.1,
-     n.minobsinnode == 50
+     fit_gbm$pred,
+     n.trees == fit_gbm$bestTune$n.trees,
+     interaction.depth == fit_gbm$bestTune$interaction.depth,
+     shrinkage == fit_gbm$bestTune$shrinkage,
+     n.minobsinnode == fit_gbm$bestTune$n.minobsinnode
 )
-
-indices_rf <- dplyr::filter(fit_rf$pred, mtry == 9)
-indices_lgr <- dplyr::filter(fit_log_reg_boost$pred, nIter == 31)
-
+indices_rf <- dplyr::filter(fit_rf$pred, mtry == fit_rf$bestTune$mtry)
+indices_lgr <- dplyr::filter(
+     fit_log_reg_boost$pred,
+     nIter == fit_log_reg_boost$bestTune$nIter
+)
+# validation curves
 gbm_curve <- roc(indices_gbm$obs, indices_gbm$porp)
 rf_curve <- roc(indices_rf$obs, indices_rf$porp)
 lgr_curve <- roc(indices_lgr$obs, indices_lgr$porp)
-
+# test set curves
+gbm_curve_t <- roc(test_data$click, predict.train(fit_gbm, newdata = test_data, type = "prob")$porp)
+rf_curve_t <- roc(test_data$click, predict.train(fit_rf, newdata = test_data, type = "prob")$porp)
+lgr_curve_t <- roc(test_data$click, predict.train(fit_log_reg_boost, newdata = test_data, type = "prob")$porp)
+# helper function
+plot_curve <- function(roc_c, main, color) {
+     plot(roc_c,
+          print.auc = TRUE, auc.polygon = TRUE,
+          auc.polygon.alpha = 0.2, grid = c(0.1, 0.2),
+          grid.col = c("green", "red"), max.auc.polygon = TRUE,
+          auc.polygon.co = color, print.thres = TRUE, main = main
+     )
+}
 windows()
-par(mfrow = c(1, 3))
-plot(gbm_curve,
-     print.auc = TRUE, auc.polygon = TRUE,
-     auc.polygon.alpha = 0.2, grid = c(0.1, 0.2),
-     grid.col = c("green", "red"), max.auc.polygon = TRUE,
-     auc.polygon.col = "lightgreen", print.thres = TRUE, main = "GBM"
-)
+par(mfrow = c(3, 2))
+plot_curve(gbm_curve, "GBM (Validation)", color = "lightgreen")
+plot_curve(gbm_curve_t, "GBM (Test)", color = "lightblue")
+plot_curve(rf_curve, "RF (Val)", color = "lightgreen")
+plot_curve(rf_curve_t, "RF (Test)", color = "lightblue")
+plot_curve(lgr_curve, "LGR (Val)", color = "lightgreen")
+plot_curve(lgr_curve_t, "LGR (Test)", color = "lightblue")
 
-plot(rf_curve,
-     print.auc = TRUE, auc.polygon = TRUE,
-     auc.polygon.alpha = 0.2, grid = c(0.1, 0.2),
-     grid.col = c("green", "red"), max.auc.polygon = TRUE,
-     auc.polygon.col = "lightblue", print.thres = TRUE, main = "RF"
-)
+# find the best threshold for the models
+bm_curves <- list(gbm_curve, rf_curve, lgr_curve)
 
-plot(lgr_curve,
-     print.auc = TRUE, auc.polygon = TRUE,
-     auc.polygon.alpha = 0.2, grid = c(0.1, 0.2),
-     grid.col = c("green", "red"), max.auc.polygon = TRUE,
-     auc.polygon.col = "lightpink", print.thres = TRUE,
-     main = "Boosted Logistic Regression"
-)
-
-# fin the best threshold for the gbm
-th_gbm <- coords(gbm_curve, "best",
-     ret = c("threshold", "sensitivity", "specificity"),
-     best.method = "youden"
-)
-
-# fin the best threshold for the rf
-th_rf <- coords(rf_curve, "best",
-     ret = c("threshold", "sensitivity", "specificity"),
-     best.method = "youden"
-)
-
-
-# fin the best threshold for the logreg
-th_lgr <- coords(lgr_curve, "best",
-     ret = c("threshold", "sensitivity", "specificity"),
-     best.method = "youden"
-)
+trhs_all <- lapply(bm_curves, \(x) {
+     coords(x, "best",
+          ret = c("threshold", "sensitivity", "specificity"),
+          best.method = "youden"
+     )
+})
 
 write.csv(c(
-     "gbm" = th_gbm[1],
-     "rf" = th_rf[1],
-     "lgr" = th_lgr[1]
-), "thresholds2.csv")
+     "gbm" = trhs_all[[1]][1],
+     "rf" = trhs_all[[2]][1],
+     "lgr" = trhs_all[[3]][1]
+), "thresholds.csv", )
