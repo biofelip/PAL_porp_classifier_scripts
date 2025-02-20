@@ -130,7 +130,7 @@ The complete description of the training can be found in our publication. These 
 
 #### Confusion matrix
 
-![Confusion Matrix](img\CF_mat.png)
+![Confusion Matrix](img/CF_mat.png)
 
 |                     | GBM  Val| RF Val| LBR Val| GBM Test| RF Test| LBR Test|
 |:--------------------|---------:|---------:|---------:|---------:|---------:|---------:|
@@ -148,4 +148,4 @@ The complete description of the training can be found in our publication. These 
 
 #### Variable importance
 
-![Variable Importance](img\varImp.png)
+![Variable Importance](img/varImp.png)
