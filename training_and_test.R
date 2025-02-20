@@ -4,6 +4,7 @@ library(plotROC)
 library(pROC)
 library(ggplot2)
 library(cowplot)
+library(butcher)
 source("utils_functions.r")
 # Load the example clicks dataset
 train_data <- read.csv("training_set.csv")
@@ -46,6 +47,7 @@ fit_control <- trainControl(
      savePredictions = TRUE
 )
 # Hyperparemeter grids for performing grid search for the  three models
+# TODO too large grid, reduce size
 tunegrid_gbm <- expand.grid(
      interaction.depth = c(2, 5, 9),
      n.trees = seq(100, 1000, by = 50),
@@ -64,6 +66,7 @@ fit_gbm <- train(click ~ .,
      metric = "ROC",
      weights = weights
 )
+fit_gbm <- butcher(fit_gbm)
 save(fit_gbm, file = "fit_gbm.RData")
 fit_rf <- train(click ~ .,
      data = train_data,
@@ -74,6 +77,7 @@ fit_rf <- train(click ~ .,
      tuneGrid = tunegrid_rf,
      weights = weights
 )
+fit_rf <- butcher(fit_rf)
 save(fit_rf, file = "fit_rf.RData")
 fit_log_reg_boost <- train(click ~ .,
      data = train_data,
@@ -84,6 +88,7 @@ fit_log_reg_boost <- train(click ~ .,
      tuneGrid = tunegrid_lgr,
      weights = weights
 )
+fit_log_reg_boost <- butcher(fit_log_reg_boost)
 save(fit_log_reg_boost, file = "fit_log_reg_boost.RData")
 # the best tune for each model is explained here
 
@@ -92,11 +97,12 @@ sapply(list(fit_gbm, fit_rf, fit_log_reg_boost), \(x) x$bestTune)
 ### Plotting results
 # Confusion matrices for Validation
 ensamble <- list(fit_gbm, fit_rf, fit_log_reg_boost)
-cf_mat_val <- lapply(ensamble, confusionMatrix.train, norm = "none")
+cf_mat_val <- lapply(ensamble, \(x) confusionMatrix(predict.train(x, newdata = train_data), train_data$click))
 cf_plots <- lapply(cf_mat_val, plot_cf)
+windows()
 plot_grid(plotlist = cf_plots, nrow = 3, labels = c("GBM", "RF", "LBR"))
 # Confusion matrices for the test set
-cf_mat_t <- lapply(ensamble, confusionMatrix, newdata = test_set, norm = "none")
+cf_mat_t <- lapply(ensamble, \(x) confusionMatrix(predict.train(x, newdata = test_data), test_data$click))
 cf_plots_t <- lapply(cf_mat_t, plot_cf)
 plot_grid(plotlist = cf_plots_t, nrow = 3, labels = c("GBM", "RF", "LBR"))
 # build roc curves for all the classifiers

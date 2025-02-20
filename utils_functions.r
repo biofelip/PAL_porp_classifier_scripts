@@ -23,7 +23,7 @@ Mode <- function(x, na.rm = FALSE) {
 
 preprocess_data <- function(data) {
   if (!(all(proper_col_names %in% colnames(data)))) {
-    stop(paste("The dataframe does not contain the proper columns type, the dataframe should contain:", proper_col_names)
+    stop(paste("The dataframe does not contain the proper columns type, the dataframe should contain:", proper_col_names))
   }
   data$TrClassH <- ifelse(data$TrClass == "High", 1, 0)
   data$TrClassM <- ifelse(data$TrClass == "Mod", 1, 0)
@@ -47,7 +47,7 @@ run_predictions <- function(data, threshold_file, return_probs = FALSE) {
   )
   thrs <- t(read.csv(threshold_file))
   rownames(thrs)[2:4] <- c("gbm", "rf", "lrb")
-  predictions_lrb_class <- ifelse(predictions_lrb$porp < thrs["lrb", 1], 0, 1) 
+  predictions_lrb_class <- ifelse(predictions_lrb$porp < thrs["lrb", 1], 0, 1)
   predictions_gbm_class <- ifelse(predictions_gbm$porp < thrs["gbm", 1], 0, 1)
   predictions_rf_class <- ifelse(predictions_rf$porp < thrs["rf", 1], 0, 1)
   predictions_df <- data.frame(
