@@ -10,7 +10,7 @@ Passive acoustic monitoring devices like the [CPOD](https://www.chelonia.co.uk/c
 
 In the recent years a new device called the Porpoise Alert [(PAL)](https://www.sciencedirect.com/science/article/pii/S0165783620302496?via%3Dihub) has gained popularity as a way to control porpoise bycatch from gillnets. However,  since PALs work by emitting a pre-recorded porpoise alert sound they can affect the accuracy of C-PODs, that will register this artificial call as a natural porpoise.
 
-To solve this problem we present a pre-trained ensemble model that can accurately classify observations as natural or artificial based on the variables stored by the CPOD. The model reached up to 95% accuracy during training and testing. Further processing is also available to deal with potential false negatives.
+To solve this problem we present a pre-trained ensemble model that can accurately classify observations as natural or artificial based on the variables stored by the CPOD. The model reached up very high accuracy during training and testing. Further processing is also available to deal with potential false negatives.
 
 ## Requirements and "Installation"
 
