@@ -24,7 +24,7 @@ All the scripts are written in R. The models are stored as R-objects from the pa
 
 The repository contains our trained model objects and they can be used without further modification (later sections will show how to train your own model) the models sizes have been reduced using the package [butcher](https://butcher.tidymodels.org/) to fit into this repository. Open the `1_Prediction.R` script, this is a simple script that run our ensemble using some custom functions.
 
-The inference  is carried out by a main function `run_predictions` and other auxiliary functions. For these functions to work make sure that you source the `utils_functions.r` script and load the pre-trained models.
+The inference  is carried out by a main function `run_predictions` and other auxiliary functions. For these functions to work make sure that you source the `0_utils_functions.r` script and load the pre-trained models.
 
 ```r
 library(caret)
